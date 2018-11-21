@@ -1,5 +1,4 @@
 #include <Windows.h>
-#include <TlHelp32.h>
 #include <math.h>
 #include <thread>
 #include <iostream>
@@ -7,59 +6,94 @@
 #include <d2d1.h>
 #pragma comment (lib, "d2d1.lib")
 
-#include <d2d1helper.h>
+//#include <d2d1helper.h>
 
 //#include <dwrite.h>
 //#pragma comment(lib, "dwrite.lib")
 
 #include "offsets.h"
-#include "datatypes.h"
+#include "rmem.h"
 
 const int MAX_PLAYERS = 64;
 #define WINDOW_NAME "Counter-Strike: Global Offensive"
 
-#define UNINITIALIZED 0xFFFFFFFF
+// For "world to screen" matrix
+struct Matrix4x4 {
+	float _[16];
+};
+
+struct Vector3D {
+	float x;
+	float y;
+	float z;
+};
+
+struct Vector2D {
+	float x;
+	float y;
+};
+
+struct LocalPlayer {
+	DWORD dwBase;
+
+	Vector3D posFeet;
+	int health;
+	int team;
+	Matrix4x4 perspective;
+};
+
+struct EntityPlayer {
+	DWORD dwBase;
+	DWORD dwBoneBase;
+
+	int health;
+	int team;
+
+	Vector3D posFeet;
+	Vector3D posHead;
+	float w;
+
+	Vector2D screenFeet;
+	Vector2D screenHead;
+
+	float boxX0;
+	float boxY0;
+	float boxX1;
+	float boxY1;
+
+	D2D1_POINT_2F hpBar0;
+	D2D1_POINT_2F hpBar1;
+	float hpBarThic;
+
+	bool visible;
+
+	ID2D1SolidColorBrush* brush;
+};
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-// Creates overlay window class and handle
-bool InitOverlayWindow(HWND& hwnd, HINSTANCE& hInstance);
-
-struct Process {
-	HWND window;
-	DWORD id;
-	HANDLE handle;
-	RECT wndRect;
-};
-
-// Returns base address of a process module
-DWORD GetModuleBase(DWORD processId, const char* moduleName);
-
-// Reads memory relative to CSGO processs
-template <typename T>
-T Read(DWORD addr);
+bool InitOverlayWindow(HWND* hwnd, HINSTANCE hInstance);
 
 // Repeatedly calls a function with specified delay after each call
 void RepeatedlyCall(void(*func)(), int delay);
 
-// ...
 void Aimbot();
 
-// Converts 3D position vector to 2D projection of it
-inline void WorldToScreen(Vector3D&, float&, float&, float&);
+void WorldToScreen(Vector3D*, Vector2D*, float*);
 
 void Render();
 
-// Returns a bone 3D position vector
-inline Vector3D GetBonePos(Entity& ent, int id);
+Vector3D GetBonePos(EntityPlayer* ent, int id);
 
-bool InitD2D(HWND& overlayWindow);
+bool InitD2D(HWND* overlayWindow);
 
-namespace Drawings {
+namespace Visuals {
 	inline void DrawESP();
 }
 
 namespace GAMEDATA {
-	inline void UpdateCoordinates();
-	inline void UpdateMisc();
-}
+	void UpdateCoordinates();
+	void DrawBoxes();
+	void UpdateHealth();
+	void UpdateMisc();
+};
