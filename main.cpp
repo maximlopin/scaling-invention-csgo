@@ -8,19 +8,13 @@ namespace BRUSH {
 };
 
 const int g_PlayersOnServer = 9; // excluding local player
-bool g_bStatusWH = true;
-bool g_bStatusAimbot = false;
+const bool g_bStatusWH = true; // on/off
+const bool g_bStatusAimbot = false; // on/off
 const float g_fAimSmoothness = 0.09f; // the smaller the smoother
 const float g_fAimFOV = 45.0f; // won't shoot at those who are out of screen range
 const int AIM_TARGET_BONE = 10; // 10 is supposed to be the head i guess, but it targets the neck
 const bool g_bRunning = true;
 const float g_AimScatter = 0.5f; // significance of aimbot randomness
-
-namespace KEY {
-	bool bArrowUp;
-	bool bArrowDown;
-	bool bReturn;
-};
 
 namespace CSGO {
 	HWND hWnd;
@@ -50,7 +44,10 @@ EntityPlayer g_Entity[MAX_PLAYERS];
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	while (!CSGO::hWnd)
-		CSGO::hWnd = FindWindow(0, WINDOW_NAME); Sleep(1000);
+	{
+		CSGO::hWnd = FindWindow(0, WINDOW_NAME); 
+		Sleep(1000);
+	}
 
 	GetWindowThreadProcessId(CSGO::hWnd, &CSGO::procId);
 
@@ -85,7 +82,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		g_Entity[i].dwBoneBase = CSGO::mem->Read<DWORD>(g_Entity[i].dwBase + OFFSET_BONE_MATRIX);
 	}	
 	
-	std::thread UpdateCoordinates(
+	std::thread updateCoordinates(
 		RepeatedlyCall, GAMEDATA::UpdateCoordinates, 50
 	);
 
@@ -93,7 +90,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		RepeatedlyCall, GAMEDATA::UpdateMisc, 1000
 	);
 
-	std::thread DrawBoxes(
+	std::thread drawBoxes(
 		RepeatedlyCall, GAMEDATA::DrawBoxes, 25
 	);
 	
@@ -108,13 +105,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		Sleep(25);
+		Sleep(50);
 	}
 
-	UpdateCoordinates.join();
+	updateCoordinates.join();
 	updMisc.join();
 	updateHealth.join();
-	DrawBoxes.join();
+	drawBoxes.join();
 
 	delete CSGO::mem;
 	return 0;
