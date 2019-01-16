@@ -3,16 +3,9 @@
 #include <thread>
 #include <iostream>
 
-#include <d2d1.h>
-#pragma comment (lib, "d2d1.lib")
-
-//#include <d2d1helper.h>
-
-//#include <dwrite.h>
-//#pragma comment(lib, "dwrite.lib")
-
 #include "offsets.h"
 #include "rmem.h"
+#include "graphics.h"
 
 const int MAX_PLAYERS = 64;
 #define WINDOW_NAME "Counter-Strike: Global Offensive"
@@ -20,6 +13,10 @@ const int MAX_PLAYERS = 64;
 // For "world to screen" matrix
 struct Matrix4x4 {
 	float _[16];
+	float operator[] (int idx) const
+	{
+		return this->_[idx];
+	}
 };
 
 struct Vector3D {
@@ -39,7 +36,7 @@ struct LocalPlayer {
 	Vector3D posFeet;
 	int health;
 	int team;
-	Matrix4x4 perspective;
+	Matrix4x4 view;
 };
 
 struct EntityPlayer {
@@ -49,21 +46,16 @@ struct EntityPlayer {
 	int health;
 	int team;
 
-	Vector3D posFeet;
-	Vector3D posHead;
-	float w;
-
-	Vector2D screenFeet;
-	Vector2D screenHead;
-
-	float boxX0;
-	float boxY0;
-	float boxX1;
-	float boxY1;
+	struct {
+		float x0;
+		float y0;
+		float x1;
+		float y1;
+	} box;
 
 	D2D1_POINT_2F hpBar0;
 	D2D1_POINT_2F hpBar1;
-	float hpBarThic;
+	float hpBarThickness;
 
 	bool visible;
 
@@ -76,24 +68,14 @@ bool InitOverlayWindow(HWND* hwnd, HINSTANCE hInstance);
 
 // Repeatedly calls a function with specified delay after each call
 void RepeatedlyCall(void(*func)(), int delay);
-
-void Aimbot();
-
-void WorldToScreen(Vector3D*, Vector2D*, float*);
-
+void WorldToScreen(Vector3D*, Vector2D*, float*, int, int);
 void Render();
 
 Vector3D GetBonePos(EntityPlayer* ent, int id);
 
 bool InitD2D(HWND* overlayWindow);
 
-namespace Visuals {
-	inline void DrawESP();
-}
-
-namespace GAMEDATA {
-	void UpdateCoordinates();
-	void DrawBoxes();
-	void UpdateHealth();
-	void UpdateMisc();
-};
+void UpdateWndStatus();
+void UpdateCoordinates();
+void UpdateHealths();
+void UpdateTeams();
